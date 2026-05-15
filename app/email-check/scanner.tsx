@@ -24,38 +24,30 @@ type ScanResult = {
    summary: string
 }
 
-const API_BASE = "https://dogo-backend-7idt.onrender.com"
 
 const Scanner = () => {
     const [email, setEmail] = useState("")
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState<ScanResult | null>(null)
-    const [token, setToken] = useState<string | null>(null)
 
     const handleScan = async () => {
-        if (!email) {
-            console.log("Input email for search");
-            return;
-        }
-
+        if (!email) return;
         setLoading(true);
+        setResults(null)
+
         try {
             // 1. Start scan
-            const res = await fetch(`${API_BASE}/api/scan`, {
+            const res = await fetch(`/api/scan/email`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ email }),
-                credentials: "include",   // ✅ send BetterAuth cookie
             });
 
-            if (!res.ok) {
-                console.error("Scan request failed", res.status);
-                return;
-            }
-
+            if (!res.ok) throw new Error("Scan initialization failed");
             const { scanId } = await res.json();
+
 
             // 2. Poll for results
             let done = false;
@@ -65,14 +57,9 @@ const Scanner = () => {
             while (!done && retries < maxRetries) {
                 retries++;
 
-                const poll = await fetch(`${API_BASE}/api/scan/${scanId}`, {
-                    credentials: "include",   // ✅ send cookie
-                });
+                const poll = await fetch(`/api/scan/${scanId}`);
 
-                if (!poll.ok) {
-                    console.error("Polling failed", poll.status);
-                    break;
-                }
+                if (!poll.ok) break;
 
                 const data = await poll.json();
 

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     const auth = await getAuth();
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session) return NextResponse.json({ error: "Unauthorized" });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, {status: 401});
 
     const { email } = await req.json();
 
@@ -12,8 +12,7 @@ export async function POST(req: Request) {
     const res = await fetch("https://dogo-backend-7idt.onrender.com/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-        credentials: "include",
+        body: JSON.stringify({ email, userId: session.user.id }),
     });
 
     const data = await res.json();
