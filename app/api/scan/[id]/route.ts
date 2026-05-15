@@ -1,33 +1,62 @@
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-
-// Define the type with a Promise for params
-type Context = {
-    params: Promise<{ id: string }>;
-};
+import { NextResponse } from "next/server";
+import { getAuth } from "@/lib/better-auth/auth";
+import { scanEmailRisk } from "@/backend/src/api/scanEmailRisk";
+import { getScan, updateScanResult, updateScanStatus } from "@/backend/src/db/scan.model";
 
 export async function GET(
-    request: NextRequest,
-    context: Context
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    // 1. Await params (Required in Next.js 15)
-    const { id } = await context.params;
+    const auth = await getAuth();
+    const session = await auth.api.getSession({ headers: req.headers });
 
-    // 2. Manual cookie forwarding (if proxying auth)
-    const cookieStore = await cookies();
-    const allCookies = cookieStore.toString();
-
-    const res = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan/${id}`, {
-        headers: {
-            "Content-Type": "application/json",
-            "Cookie": allCookies // Forwarding auth to backend
-        },
-    });
-
-    if (!res.ok) {
-        return NextResponse.json({ error: "Failed to fetch" }, { status: res.status });
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    const { id } = await params;
+    const scan = await getScan(id, session.user.id);
+    if (!scan) {
+        return NextResponse.json({ error: "Scan not found" }, { status: 404 });
+    }
+
+    if (scan.status === 'completed' || scan.status === 'failed') {
+        return NextResponse.json({ status: scan.status, result: scan.result });
+    }
+
+    if (scan.status === 'processing') {
+        return NextResponse.json({ status: 'processing' });
+    }
+
+    await updateScanStatus(id, 'processing');
+
+    try {
+        const riskResult = await scanEmailRisk(scan.email);
+
+        const result = {
+            breaches: riskResult.publicMentions.map((url: string) => ({
+                name: new URL(url).hostname,
+                date: new Date().toISOString(),
+                exposed: ['email'],
+                risk: riskResult.hasGravatar || riskResult.foundOnGitHub ? 'High' : 'Medium',
+                source: url,
+            })),
+            totalMentions: riskResult.publicMentions.length,
+            signals: {
+                isValid: riskResult.isValid,
+                hasGravatar: riskResult.hasGravatar,
+                foundOnGitHub: riskResult.foundOnGitHub,
+                foundInBreaches: riskResult.foundInBreaches,
+            },
+            summary: riskResult.summary,
+        };
+
+        await updateScanResult(id, result, 'completed');
+        return NextResponse.json({ status: 'completed', result });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        await updateScanResult(id, { error: errorMessage }, 'failed');
+        return NextResponse.json({ status: 'failed', result: { error: errorMessage } });
+    }
 }
+

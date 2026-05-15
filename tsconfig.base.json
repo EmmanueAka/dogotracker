@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "moduleResolution": "Node",
+    "moduleResolution": "Node16",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["backend/src/*"],
-      "lib/*": ["lib/*"]
+      "@/*": ["./backend/src/*"],
+      "lib/*": ["./lib/*"]
     }
   },
   "include": ["backend/src/**/*", "lib/**/*"]
