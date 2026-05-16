@@ -8,14 +8,14 @@ export async function GET(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     if(!id) return NextResponse.json({ error: "Invalid id"}, {status: 400})
 
     const auth = await getAuth();
 
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const cookieString = cookieStore.getAll()
         .map(c => `${c.name}=${c.value}`)
         .join("; ");
