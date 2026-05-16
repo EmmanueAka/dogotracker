@@ -16,9 +16,12 @@ export async function POST(req: Request) {
         }
 
         const cookieStore = await cookies();
-        const cookieString = cookieStore.getAll()
+        const cookieString = cookieStore
+            .getAll()
             .map((c) => `${c.name}=${c.value}`)
             .join("; ");
+
+        const sessionToken = cookieStore.get("better-auth.session_token")?.value;
 
         const bodyData = await req.json();
 
@@ -26,19 +29,23 @@ export async function POST(req: Request) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
                 ...(cookieString ? { Cookie: cookieString } : {}),
             },
             body: JSON.stringify(bodyData),
             credentials: "include",
         });
 
-        // Safety Guard: Intercept HTML response exceptions from Express/Render
         const contentType = backendRes.headers.get("content-type");
         if (!backendRes.ok || !contentType || !contentType.includes("application/json")) {
-            const errorText = await backendRes.text();
-            console.error("Express cluster rejected forwarding sweep:", errorText);
+            const errorText = await backendRes.text().catch(() => "");
+            console.error("Express backend rejected request:", errorText);
             return NextResponse.json(
-                { error: `Express backend error: ${backendRes.status}` },
+                {
+                    error: "Express backend error",
+                    status: backendRes.status,
+                    details: errorText,
+                },
                 { status: backendRes.status || 502 }
             );
         }
@@ -54,6 +61,10 @@ export async function POST(req: Request) {
         );
     }
 }
+
+
+
+
 
 
 
