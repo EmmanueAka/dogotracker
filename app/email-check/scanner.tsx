@@ -43,11 +43,35 @@ const Scanner = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ email }),
+                credentials: "include",
             });
 
-            if (!res.ok) throw new Error("Scan initialization failed");
-            const { scanId } = await res.json();
+            if(!res.ok){
+                const errorText = await res.text();
+                console.error("Scan init failed:", res.status, errorText)
+                setLoading(false)
+                return
+            }
 
+            const responseData = await res.json();
+            console.log("--- DEBUG BACKEND DATA STRUCTURE ---");
+            console.log("Raw Response Payload:", responseData);
+            console.log("Available Root Keys:", Object.keys(responseData || {}));
+            console.log("--------------------------------------");
+
+            const targetId =
+                responseData?.scanId ||
+                responseData?.id ||
+                responseData?._id ||
+                responseData?.data?.scanId ||
+                responseData?.data?.id ||
+                responseData?.scan?.id;
+
+            if(!targetId){
+                console.error("Payload breakdown failed. Stringified response:", JSON.stringify(responseData))
+                setLoading(false);
+                return;
+            }
 
             // 2. Poll for results
             let done = false;
@@ -57,7 +81,7 @@ const Scanner = () => {
             while (!done && retries < maxRetries) {
                 retries++;
 
-                const poll = await fetch(`/api/scan/${scanId}`);
+                const poll = await fetch(`/api/scan/${targetId}`);
 
                 if (!poll.ok) break;
 
@@ -167,3 +191,4 @@ const Scanner = () => {
     )
 }
 export default Scanner
+
