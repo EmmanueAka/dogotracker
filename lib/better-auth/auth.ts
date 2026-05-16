@@ -4,7 +4,6 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
 import { connectToDatabase } from "@/database/mongoose";
 
-// 1. Isolate config layout using 'satisfies BetterAuthOptions' to auto-infer properties
 const config = {
     database: mongodbAdapter,
     secret: process.env.BETTER_AUTH_SECRET!,
@@ -17,21 +16,20 @@ const config = {
         maxPasswordLength: 128,
         autoSignIn: true,
     },
-    // Keep nextCookies() active for Vercel; our Render Direct DB lookup middleware will bypass it natively
     plugins: [nextCookies()]
 } satisfies BetterAuthOptions;
 
-// 2. Use the inferred configuration mapping type to prevent type assignment errors
-let authInstance: ReturnType<typeof betterAuth<typeof config>> | undefined;
+type StrictAuthType = NonNullable<ReturnType<typeof betterAuth<typeof config>>>;
+let authInstance: StrictAuthType | undefined;
 
-export const getAuth = async () => {
+// 🔴 Explicitly tell TypeScript this returns Promise<StrictAuthType>
+export const getAuth = async (): Promise<StrictAuthType> => {
     if (authInstance) return authInstance;
 
     const mongoose = await connectToDatabase();
     const db = mongoose.connection?.db;
     if (!db) throw new Error("Database mapping channel not connected");
 
-    // Pass the active DB client session safely into the adapter instance closure
     authInstance = betterAuth({
         ...config,
         database: mongodbAdapter(db)
@@ -40,5 +38,4 @@ export const getAuth = async () => {
     return authInstance;
 };
 
-// 3. Clear ambiguous generic types
 export type AuthType = Awaited<ReturnType<typeof getAuth>>;
