@@ -1,5 +1,6 @@
 import { getAuth } from "@/lib/better-auth/auth";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
     const auth = await getAuth();
@@ -8,10 +9,18 @@ export async function POST(req: Request) {
 
     const { phone } = await req.json();
 
+    const cookieStore = await cookies();
+    const cookieString = cookieStore.getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ");
+
     // Call your backend service on Render
     const res = await fetch("https://dogo-backend-7idt.onrender.com/api/scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            ...(cookieString ? { Cookie: cookieString } : {}),
+        },
         body: JSON.stringify({ phone }),
         credentials: "include",
     });

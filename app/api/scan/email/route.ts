@@ -16,14 +16,17 @@ export async function POST(req: Request) {
         }
 
         const cookieStore = await cookies();
-        const sessionToken = cookieStore.get("better-auth.session_token")?.value || "";
+        const cookieString = cookieStore.getAll()
+            .map((c) => `${c.name}=${c.value}`)
+            .join("; ");
+
         const bodyData = await req.json();
 
         const backendRes = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${sessionToken}`
+                ...(cookieString ? { Cookie: cookieString } : {}),
             },
             body: JSON.stringify(bodyData),
             credentials: "include",
@@ -51,3 +54,6 @@ export async function POST(req: Request) {
         );
     }
 }
+
+
+
