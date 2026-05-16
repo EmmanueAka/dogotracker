@@ -4,7 +4,14 @@ import {cookies} from "next/headers";
 import type { NextRequest } from "next/server";
 
 
-export async function GET(req: NextRequest, { params }: { params: { id: string}}) {
+export async function GET(
+    req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    const { id } = context.params;
+
+    if(!id) return NextResponse.json({ error: "Invalid id"}, {status: 400})
+
     const auth = await getAuth();
 
 
