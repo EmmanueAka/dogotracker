@@ -35,7 +35,7 @@ const Scanner = () => {
 
         try {
             // 1. Start scan
-            const res = await fetch(`/api/scan/email`, {
+            const res = await fetch(`/api/scan`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
