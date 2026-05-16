@@ -38,8 +38,8 @@ export async function GET(
         const res = await fetch(BACKEND_URL, {
             headers: {
                 "Content-Type": "application/json",
-                "Cookie": cookieString,
-            }
+            },
+            credentials: "include"
         });
 
         if (!res.ok) {
