@@ -1,24 +1,38 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "@/lib/better-auth/auth";
+import {cookies} from "next/headers";
 
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string}>}) {
+export async function GET(req: Request, { params }: { params: { id: string}}) {
     const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: req.headers });
 
-    if(!session ) return NextResponse.json({ error: "Unauthorized"}, {status: 401})
 
-    const resolvedParams = await params
-    const id = resolvedParams?.id;
+    const cookieStore = cookies();
+    const cookieString = cookieStore.getAll()
+        .map(c => `${c.name}=${c.value}`)
+        .join("; ");
 
-    if(!id || id === 'undefined') return NextResponse.json({ error: "Invalid ID" }, {status: 400});
+    const validationHeaders = new Headers();
+    if (cookieString){
+        validationHeaders.append("Cookie", cookieString)
+    }
 
-    const BACKEND_URL = ` https://dogo-backend-7idt.onrender.com/${id}`
+    const session = await auth.api.getSession({ headers: validationHeaders })
+
+    if(!session || !session.user){
+        return NextResponse.json({ error: "Unauthorized "}, { status: 401})
+    }
+
+    const id = params?.id;
+    if(!id) return NextResponse.json({ error: "Invalid id" }, { status: 400});
+
+    const BACKEND_URL = `https://dogo-backend-7idt.onrender.com/api/scan/${id}`
 
     try {
         const res = await fetch(BACKEND_URL, {
             headers: {
-                "Authorization": `Bearer ${session.user.id}`
+                "Content-Type": "application/json",
+                "Cookie": cookieString,
             }
         });
 
