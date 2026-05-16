@@ -16,15 +16,17 @@ export async function POST(req: Request) {
         }
 
         const cookieStore = await cookies();
+        const sessionToken = cookieStore.get("better-auth.session_token")?.value || "";
         const bodyData = await req.json();
 
         const backendRes = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${sessionToken}`
             },
             body: JSON.stringify(bodyData),
-            credentials: "include"
+            credentials: "include",
         });
 
         // Safety Guard: Intercept HTML response exceptions from Express/Render

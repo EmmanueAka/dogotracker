@@ -39,7 +39,7 @@ export async function GET(
             headers: {
                 "Content-Type": "application/json",
             },
-            credentials: "include"
+            credentials: "include",
         });
 
         if (!res.ok) {
