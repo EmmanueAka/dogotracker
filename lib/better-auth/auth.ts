@@ -1,23 +1,17 @@
 /* @ts-nocheck */
-import { betterAuth } from "better-auth";
+import { betterAuth, type Auth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { nextCookies } from "better-auth/next-js";
 import { connectToDatabase } from "@/database/mongoose";
 
-// 1. DO NOT use the "Auth" type here.
-// We use 'any' for the placeholder or 'ReturnType<typeof betterAuth>'
-let authInstance: ReturnType<typeof betterAuth> | undefined;
+let authInstance: Auth | undefined;
 
-export const getAuth = async () => {
+export const getAuth = async (): Promise<Auth> => {
     if (authInstance) return authInstance;
 
     const mongoose = await connectToDatabase();
     const db = mongoose.connection.db;
     if (!db) throw new Error("Database not connected");
 
-    // 2. DO NOT use betterAuth<BetterAuthOptions>(...)
-    // Just call the function directly so it can infer your specific setup.
-    // @ts-expect-error - pre-existing better-auth type compatibility issue
     authInstance = betterAuth({
         database: mongodbAdapter(db),
         secret: process.env.BETTER_AUTH_SECRET!,
@@ -30,11 +24,11 @@ export const getAuth = async () => {
             maxPasswordLength: 128,
             autoSignIn: true,
         },
-        plugins: [nextCookies()],
+        // 🔴 CRUCIAL FIX: Kept empty. Do NOT mount nextCookies() on an Express server instance!
+        plugins: []
     });
 
     return authInstance;
 };
 
-// 3. This export allows your middleware to stay typed correctly
-export type Auth = ReturnType<typeof betterAuth>;
+export type AuthType = Awaited<ReturnType<typeof getAuth>>
