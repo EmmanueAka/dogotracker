@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         const sessionToken = cookieStore.get("better-auth.session_token")?.value || "";
         const bodyData = await req.json();
 
-        const backendRes = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan/${id}`, {
+        const backendRes = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan.route.ts`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
