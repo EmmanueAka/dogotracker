@@ -29,8 +29,7 @@ export async function POST(req: Request) {
         const bodyData = await req.json();
 
         // 4. Dispatch fetch forwarding call to your live Render application service
-        // Make sure the path points exactly to your root node point '/api/scan'
-        const backendRes = await fetch("https://onrender.com", {
+        const backendRes = await fetch(" https://dogo-backend-7idt.onrender.com", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
