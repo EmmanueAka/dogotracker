@@ -3,7 +3,7 @@ import { getAuth } from "@/lib/better-auth/auth";
 import {cookies} from "next/headers";
 
 
-export async function GET(req: Request, { params }: { params: { id: string}}) {
+export async function GET(req: Request, { params }: Promise<{ params: { id: string}}>) {
     const auth = await getAuth();
 
 
