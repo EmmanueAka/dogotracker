@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { getAuth } from "@/lib/better-auth/auth";
 
 export async function POST(req: Request) {
@@ -9,62 +9,26 @@ export async function POST(req: Request) {
         const session = await auth.api.getSession({ headers: currentHeaders });
 
         if (!session || !session.user) {
-            return NextResponse.json(
-                { error: "Unauthorized - Better Auth session missing" },
-                { status: 401 }
-            );
+            return NextResponse.json({ error: "Unauthorized - Better Auth session missing" }, { status: 401 });
         }
 
-        const cookieStore = await cookies();
-        const cookieString = cookieStore
-            .getAll()
-            .map((c) => `${c.name}=${c.value}`)
-            .join("; ");
+        const bodyData = await req.json(); // Expected incoming payload layout: { email }
+        const BACKEND_BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
+        const SHARED_SECRET = process.env.INTERNAL_SHARED_SECRET || "local_dev_secret_key";
 
-        const sessionToken = cookieStore.get("better-auth.session_token")?.value;
-
-        const bodyData = await req.json();
-
-        const backendRes = await fetch(`https://dogo-backend-7idt.onrender.com/api/scan`, {
+        const backendRes = await fetch(`${BACKEND_BASE_URL}/api/scan/email`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
-                ...(cookieString ? { Cookie: cookieString } : {}),
+                "X-API-Key": SHARED_SECRET,
+                "X-User-Id": session.user.id
             },
-            body: JSON.stringify(bodyData),
-            credentials: "include",
+            body: JSON.stringify(bodyData)
         });
 
-        const contentType = backendRes.headers.get("content-type");
-        if (!backendRes.ok || !contentType || !contentType.includes("application/json")) {
-            const errorText = await backendRes.text().catch(() => "");
-            console.error("Express backend rejected request:", errorText);
-            return NextResponse.json(
-                {
-                    error: "Express backend error",
-                    status: backendRes.status,
-                    details: errorText,
-                },
-                { status: backendRes.status || 502 }
-            );
-        }
-
         const data = await backendRes.json();
-        return NextResponse.json(data);
-
+        return NextResponse.json(data, { status: backendRes.status });
     } catch (error) {
-        console.error("Critical failure inside Next.js API Proxy:", error);
-        return NextResponse.json(
-            { error: "Internal Server Proxy error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal Proxy Email Route failure." }, { status: 500 });
     }
 }
-
-
-
-
-
-
-

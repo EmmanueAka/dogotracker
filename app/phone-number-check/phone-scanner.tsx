@@ -12,14 +12,14 @@ type FootprintItem = {
 type ScanResult = {
     _id: string;
     userId: string;
-    type: 'email';
+    type: 'phone';
     value: string;
     totalMentions: number;
     footprints: FootprintItem[];
     searchedAt: string
 }
 
-const Scanner = () => {
+const PhoneScanner = () => {
     const [email, setEmail] = useState("")
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState<ScanResult | null>(null)
@@ -204,4 +204,4 @@ const Scanner = () => {
     )
 }
 
-export default Scanner;
+export default PhoneScanner;

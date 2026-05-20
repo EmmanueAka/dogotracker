@@ -1,45 +1,34 @@
-import { getAuth } from "@/lib/better-auth/auth";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import { getAuth } from "@/lib/better-auth/auth";
 
 export async function POST(req: Request) {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: req.headers });
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+        const auth = await getAuth();
+        const currentHeaders = await headers();
+        const session = await auth.api.getSession({ headers: currentHeaders });
 
-    const { platform, handle } = await req.json();
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-    const cookieStore = await cookies();
-    const cookieString = cookieStore
-        .getAll()
-        .map((c) => `${c.name}=${c.value}`)
-        .join("; ");
+        const bodyData = await req.json(); // Expected payload: { handle }
+        const BACKEND_BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
+        const SHARED_SECRET = process.env.INTERNAL_SHARED_SECRET || "local_dev_secret_key";
 
-    // Express requireAuth supports either Authorization header OR the cookie:
-    //   better-auth.session_token
-    const sessionToken = cookieStore.get("better-auth.session_token")?.value;
+        const backendRes = await fetch(`${BACKEND_BASE_URL}/api/scan/social`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": SHARED_SECRET,
+                "X-User-Id": session.user.id
+            },
+            body: JSON.stringify(bodyData)
+        });
 
-    const res = await fetch("https://dogo-backend-7idt.onrender.com/api/scan", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
-            ...(cookieString ? { Cookie: cookieString } : {}),
-        },
-        body: JSON.stringify({ platform, handle }),
-        credentials: "include",
-    });
-
-    const contentType = res.headers.get("content-type");
-    if (!res.ok || !contentType || !contentType.includes("application/json")) {
-        const errorText = await res.text().catch(() => "");
-        return NextResponse.json(
-            { error: "Express backend rejected request", status: res.status, details: errorText },
-            { status: res.status || 502 }
-        );
+        const data = await backendRes.json();
+        return NextResponse.json(data, { status: backendRes.status });
+    } catch (error) {
+        return NextResponse.json({ error: "Internal Proxy Social Route failure." }, { status: 500 });
     }
-
-    const data = await res.json();
-    return NextResponse.json(data);
 }
-

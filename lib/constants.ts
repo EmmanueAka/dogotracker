@@ -4,7 +4,7 @@ export const NAV_ITEMS = [
     {href: '/', label: 'HOME'},
     {href: '/email-check', label: 'EMAIL CHECK'},
     {href: '/social-media-check', label: 'SOCIAL MEDIA CHECK'},
-    {href: '/email-number-check', label: 'PHONE NUMBER CHECK'},
+    {href: '/phone-number-check', label: 'PHONE NUMBER CHECK'},
     {href: '/blog', label: 'ABOUT'},
 
 ]
