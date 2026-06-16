@@ -1,7 +1,8 @@
 'use client'
 
 import { RadioTower, Search, CirclePower, RotateCcw } from 'lucide-react'
-import { useState } from "react";
+import {useEffect, useRef, useState} from "react";
+import {useSearchParams} from "next/navigation";
 
 type FootprintItem = {
     title: string;
@@ -20,13 +21,25 @@ type ScanResult = {
 }
 
 const Scanner = () => {
-    const [email, setEmail] = useState("")
+    const searchParams = useSearchParams();
+
+    const queryScanValue = searchParams.get('scan') || "";
+    const shouldTrigger = searchParams.get('trigger') === 'true';
+
+    const [email, setEmail] = useState(queryScanValue)
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState<ScanResult | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-    const handleScan = async () => {
-        if (!email) return;
+
+    const scanTriggeredRef = useRef(false)
+
+
+
+    const handleScan = async (targetEmail?:string) => {
+        const emailToScan = targetEmail || email
+        if (!emailToScan) return;
+
         setLoading(true);
         setResults(null);
         setErrorMsg(null)
@@ -38,7 +51,7 @@ const Scanner = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email: emailToScan }),
             });
 
             let responseData;
@@ -68,6 +81,16 @@ const Scanner = () => {
         }
     };
 
+
+
+        useEffect(() => {
+
+        if(shouldTrigger && queryScanValue && !scanTriggeredRef.current){
+            scanTriggeredRef.current = true;
+            handleScan(queryScanValue)
+        }
+    }, [shouldTrigger, searchParams]);
+
     const handleReset = () => {
         setEmail("")
         setResults(null)
@@ -75,7 +98,7 @@ const Scanner = () => {
     }
 
     return (
-        <div className='h-auto mb-16'>
+        <div className='h-screen overflow-y-auto scrollbar-hide-default mb-16'>
             <div className='h-auto w-full'>
                 <h2 className='text-5xl text-white font-bold'>Neural Scanner <span className='primary-text'>v2.4</span></h2>
                 <p className='text-gray-500'>Deploying sentient heuristics for real-time identity validation. Cross-referencing 4.2B data points across decentralized networks.</p>

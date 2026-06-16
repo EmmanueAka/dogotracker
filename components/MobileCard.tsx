@@ -1,6 +1,7 @@
 import React from 'react'
 import {MOBILE_CARD_ITEMS} from "@/lib/constants";
 import {ChevronRight} from "lucide-react";
+import Link from "next/link";
 
 const MobileCard = () => {
     return (
@@ -16,9 +17,10 @@ const MobileCard = () => {
                         <h2 className='text-white font-bold'>{item.title}</h2>
                         <p className='text-gray-500 text-xs'>{item.desc}</p>
                     </div>
-                    <button className='text-[#00f2ff] cursor-pointer text-xs flex items-row gap-2'>
+                    <Link href={item.href} className='text-[#00f2ff] cursor-pointer text-xs flex items-row gap-2'>
                         <ChevronRight className='h-5 w-5 transition-transform duration-300 ease-linear hover:translate-x-1'/>
-                    </button>
+                    </Link>
+
                 </div>
                 )})}
         </div>

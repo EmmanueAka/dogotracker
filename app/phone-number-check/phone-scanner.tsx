@@ -1,7 +1,8 @@
 'use client'
 
 import { RadioTower, Search, CirclePower, RotateCcw } from 'lucide-react'
-import { useState } from "react";
+import {useEffect, useRef, useState} from "react";
+import {useSearchParams} from "next/navigation";
 
 type FootprintItem = {
     title: string;
@@ -20,25 +21,34 @@ type ScanResult = {
 }
 
 const PhoneScanner = () => {
-    const [email, setEmail] = useState("")
+    const searchParams = useSearchParams();
+
+    const queryScanValue = searchParams.get('scan') || "";
+    const shouldTrigger = searchParams.get('trigger') === 'true';
+
+    const [phone, setPhone] = useState(queryScanValue)
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState<ScanResult | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-    const handleScan = async () => {
-        if (!email) return;
+    const scanTriggeredRef = useRef(false)
+
+    const handleScan = async (targetPhone?: string) => {
+        const phoneToScan = targetPhone || phone
+        if (!phoneToScan) return;
+
         setLoading(true);
         setResults(null);
         setErrorMsg(null)
 
         try {
             // 1. Start scan
-            const res = await fetch(`/api/scan/email`, {
+            const res = await fetch(`/api/scan/phone`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ phone: phoneToScan }),
             });
 
             let responseData;
@@ -68,8 +78,15 @@ const PhoneScanner = () => {
         }
     };
 
+    useEffect(() => {
+        if(shouldTrigger && queryScanValue && !scanTriggeredRef.current){
+            scanTriggeredRef.current = true;
+            handleScan(queryScanValue)
+        }
+    }, [shouldTrigger, searchParams]);
+
     const handleReset = () => {
-        setEmail("")
+        setPhone("")
         setResults(null)
         setErrorMsg(null)
     }
@@ -87,20 +104,20 @@ const PhoneScanner = () => {
                         <div className='flex flex-col mt-6'>
                             <div className='items-center flex gap-2'>
                                 <RadioTower className='w-10 h-10 primary-text'/>
-                                <h1 className='text-2xl font-bold text-white p-4'>SCAN EMAIL ADDRESS</h1>
+                                <h1 className='text-2xl font-bold text-white p-4'>SCAN PHONE NUMBER</h1>
                             </div>
-                            <p className='text-gray-500 px-6'>TARGET IDENTIFICATION EMAIL</p>
+                            <p className='text-gray-500 px-6'>TARGET IDENTIFICATION NUMBER</p>
                         </div>
 
                         <div className='flex items-center justify-center gap-4'>
                             <div className=' border-b-2 border-[#00f2ff] flex items-center  gap-4 p-1 bg-black'>
                                 <Search className='primary-text w-8 h-8'/>
                                 <input
-                                    value={email}
-                                    name='text'
-                                    type='email'
-                                    onChange={e => setEmail(e.target.value)}
-                                    placeholder='example@email.com'
+                                    value={phone}
+                                    name='phonenumber'
+                                    type='tel'
+                                    onChange={e => setPhone(e.target.value)}
+                                    placeholder='(234) 80 123 456 789'
                                     className='text-gray-500 rounded-md p-2 text-2xl focus:outline-none active:bg-[#00f2ff]/20 bg-transparent'
                                 />
                             </div>
@@ -111,7 +128,7 @@ const PhoneScanner = () => {
                                 <button
                                     className={`w-[150px] h-[82px] p-4 rounded-md font-bold flex items-center justify-center gap-2 ${ loading ? "bg-gray-600 text-gray-300 cursor-not-allowed" : "bg-[#00f2ff] text-black hover:bg-[#fabd62]"}`}
                                     onClick={handleScan}
-                                    disabled={loading || !email}
+                                    disabled={loading || !phone}
                                 >
                                     <CirclePower className='text-black w-6 h-6'/>
                                     {loading ? "Scanning..." : "INITIALIZE SCAN"}

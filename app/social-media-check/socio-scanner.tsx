@@ -1,7 +1,8 @@
 'use client'
 
 import { RadioTower, Search, CirclePower, RotateCcw, Mail, Globe } from 'lucide-react'
-import { useState } from "react";
+import {useEffect, useRef, useState} from "react";
+import {useSearchParams} from "next/navigation";
 
 type FootprintItem = {
     title: string;
@@ -20,15 +21,33 @@ type ScanResult = {
 }
 
 const SocioScanner = () => {
-    const [social, setSocial] = useState("")
+    const searchParams = useSearchParams();
+
+    const queryScanValue = searchParams.get('scan') || "";
+    const shouldTrigger = searchParams.get('trigger') === 'true';
+
+
+    const [social, setSocial] = useState(queryScanValue)
     const [loading, setLoading] = useState(false)
     const [results, setResults] = useState<ScanResult | null>(null)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [platform, setPlatform] = useState("twitter")
     const [email, setEmail] = useState('')
 
-    const handleScan = async () => {
-        if (!social) return;
+    const scanTriggeredRef = useRef(false)
+
+    const socialHandleRegex = /^([@#]?[a-zA-Z0-9_.-]{1,30})$/;
+
+
+    const handleScan = async (targetSocial?:string) => {
+        const handleToScan = targetSocial || social
+        if (!handleToScan) return;
+
+        if(!socialHandleRegex.test(handleToScan)){
+            setErrorMsg("Invalid social address formatting footprint.")
+            return;
+        }
+
         setLoading(true);
         setResults(null);
         setErrorMsg(null)
@@ -40,7 +59,7 @@ const SocioScanner = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ handle: social, platforms: [platform], email }),
+                body: JSON.stringify({ handle: handleToScan, platforms: [platform], email }),
             });
 
             let responseData;
@@ -71,12 +90,20 @@ const SocioScanner = () => {
         }
     };
 
+    useEffect(() => {
+        if(shouldTrigger && queryScanValue && !scanTriggeredRef.current){
+            scanTriggeredRef.current = true;
+            handleScan(queryScanValue)
+        }
+    }, [shouldTrigger, searchParams]);
+
     const handleReset = () => {
         setSocial("")
         setEmail("")
         setPlatform("twitter")
         setResults(null)
         setErrorMsg(null)
+        scanTriggeredRef.current = false
     }
 
     return (

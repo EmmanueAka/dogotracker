@@ -1,3 +1,4 @@
+
 import { BackgroundLines } from '@/components/ui/background-lines'
 import { DottedGlowBackground } from '@/components/ui/dotted-glow-background'
 import { Raleway } from 'next/font/google'
@@ -7,6 +8,7 @@ import React from 'react'
 import {headers} from "next/headers";
 import {redirect} from "next/navigation";
 import { getAuth } from "@/lib/better-auth/auth";
+
 
 const raleway = Raleway({
     subsets: ['latin'],
@@ -36,9 +38,12 @@ const session = await auth.api.getSession({headers: await headers()})
                 speedScale={1}
 
                 />
+            <div className='flex items-center gap-4'>
             <Link href='/'>
-            <Image src='/logo.svg' alt='logo' width={200} height={100} className='mt-4'/>
+            <Image src='/DogoTracker.svg' alt='logo' width={36} height={36} className='mt-4'/>
             </Link>
+                <p className={`text-white text-[46px] mt-3 font-bold`}>DogoTracker</p>
+            </div>
             <div className='pb-6 lg:pb-8 flex-1'>
                 {children}
             </div>
@@ -46,7 +51,8 @@ const session = await auth.api.getSession({headers: await headers()})
         <section className='hidden md:flex w-full max-lg:border-t max-lg:border-gray-600 lg:w-[55%] lg:h-screen bg-linear relative'>
                 
             <div className={`text-white  p-4 font-bold z-50 md:text-[46px]  mb-4 hidden md:flex absolute`}>
-                <div className='flex leading-11 mt-8 text-blue-400 flex-col'>
+                <div
+                    className='flex leading-11 mt-8 text-blue-400 flex-col'>
                     <span>Proactive,</span>
                     <span>Intelligent,</span>
                     <span>Dynamic,</span>
@@ -55,7 +61,7 @@ const session = await auth.api.getSession({headers: await headers()})
                         <span>Mitigate every risk and shut down threats across every attack</span>
                         <span>surface with Self-Learning AI that adapts to your business.</span>
             </div>
-                </div>                
+                </div>
             </div>
            <BackgroundLines className='flex items-center justify-center w-full flex-col px-4 z-20'>
                 <div className='w-[400px] h-[200px] '> <Image src='/ai-mobile.png' alt='ai-mobile' width={250} height={150} className='object-fit absolute bottom-0 left-20'/></div>

@@ -1,18 +1,13 @@
 'use client'
 
-import { Orbitron, Space_Grotesk } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import Image from "next/image";
 import { ShieldCheck, Infinity,SquareTerminal, Database, Shield} from "lucide-react";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import CardItems from "@/components/CardItems";
 import MobileCard from "@/components/MobileCard";
+import {useRouter} from "next/navigation";
 
-
-
-const orbitron = Orbitron({
-    subsets:['latin'],
-    weight: ["500", "400", "700"]
-})
 
 const spaceGrotesk = Space_Grotesk({
     subsets: ['latin'],
@@ -22,6 +17,39 @@ const spaceGrotesk = Space_Grotesk({
 
 
 const Page = () => {
+
+    const [inputValue, setInputValue] = useState('')
+    const router = useRouter()
+
+    const detectInputType = (value: string) => {
+        const trimmed = value.trim();
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Supports international format without spaces
+
+        const isFacebook = trimmed.startsWith('#') && trimmed.length > 1;
+        const isTwitter = trimmed.startsWith('@') && trimmed.length > 1;
+        const isInstagram = /^[a-zA-Z0-9._]{1,30}$/.test(trimmed) && !emailRegex.test(trimmed) && !phoneRegex.test(trimmed.replace(/[\s-]/g, ''));
+
+        if(emailRegex.test(trimmed)) return 'email-check';
+        if(phoneRegex.test(trimmed.replace(/[\s-]/g, ''))) return 'phone-number-check';
+        if (isFacebook || isTwitter || isInstagram) return 'social-media-check';
+        return 'unknown';
+    };
+
+    const handleCheck = () => {
+        const inputType = detectInputType(inputValue);
+
+        if(inputType === 'unknown'){
+            alert('Please enter a valid email, phone number, or social handle ')
+            return
+        }
+
+        const encodedValue = encodeURIComponent(inputValue.trim())
+        router.push(`/${inputType}?scan=${encodedValue}&trigger=true`)
+
+    }
+
     useEffect(() => {
         let timeout: ReturnType<typeof setTimeout>
 
@@ -57,7 +85,7 @@ const Page = () => {
                    </div>
 
                    {/*hero text-grid*/}
-                   <div className='flex sm:justify-start flex-col lg:mt-12 sm:mt-6 '>
+                   <div className='flex sm:justify-start flex-col lg:mt-12 sm:mt-6 z-50'>
                        <h1 className={`hero-text hidden sm:block ${spaceGrotesk.className}`}>DogoTracker</h1>
                        <div className='w-full flex-wrap mt-12'>
                            <div className='mobile-heading mb-2'>
@@ -79,8 +107,8 @@ const Page = () => {
                            <div className='bg-[#00f2ff]/30 h-[80px] w-[200px] sm:h-[80px] absolute sm:w-[250px] lg:w-[500px] blur-2xl  rounded-md'></div>
                            <div className='text-gray-300 sm:gap-0 gap-3 text-lg lg:w-150 md:w-120 sm: sm:p-2 p-2 border border-[#00f2ff]/20 sm:border-0 z-10 flex flex-row items-center justify-between bg-black rounded-sm'>
                                <ShieldCheck className='w-6 h-6 text-[#00f2ff]'/>
-                               <input type='text' placeholder='Enter email, handle or pone number... ' className='sm:p-2 p-4 sm:w-82 w-52 focus:outline-none'/>
-                               <button className='primary-col cursor-pointer p-2 w-28 font-bold text-black items-center jutify-center rounded-md sm:rounded-none'>
+                               <input onChange={(e) => setInputValue(e.target.value)} value={inputValue} type='text' placeholder='Enter email, handle or pone number... ' className='sm:p-2 p-4 sm:w-82 w-52 focus:outline-none'/>
+                               <button onClick={handleCheck} className='primary-col cursor-pointer p-2 w-28 font-bold text-black items-center jutify-center rounded-md sm:rounded-none'>
                                    Check
                                </button>
                            </div>

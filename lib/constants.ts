@@ -18,7 +18,7 @@ export const CARD_ITEMS = [
 ]
 
 export const TESTIMONIALS = [
-    { desc: 'Before integrating this platform, our security team was drowning in alerts. Now, the AI filters noise and flags only what matters. It’s like having a digital analyst who never sleeps.', name: 'Aisha Bello, CTO at NovaTech Systems'},
+    {desc: 'Before integrating this platform, our security team was drowning in alerts. Now, the AI filters noise and flags only what matters. It’s like having a digital analyst who never sleeps.', name: 'Aisha Bello, CTO at NovaTech Systems'},
     {desc: 'We needed a solution that could scale with us. The self-learning AI adapts to our evolving threat landscape better than any manual system we’ve tried.', name: "Fatima Yusuf, Co-founder of ByteShield"},
     {desc: 'I’m not a tech expert, but this made privacy simple. One scan showed me where my email had been exposed—and helped me clean it up instantly', name: 'Emmanuel O., Lagos'},
    
@@ -31,7 +31,7 @@ export const HERO_CARD_ITEMS = [
 ]
 
 export const MOBILE_CARD_ITEMS = [
-    {icon: Mail, title: "Email Check", desc: "Scan for breaches & leaks"},
-    {icon: Share, title: "Social Media Check", desc: "Verify digital footprints"},
-    {icon: Phone, title: "Phone Number Check", desc: "Identify risk profiles"}
+    {href:"/email-check", icon: Mail, title: "Email Check", desc: "Scan for breaches & leaks"},
+    {href:"/social-media-check", icon: Share, title: "Social Media Check", desc: "Verify digital footprints"},
+    {href:"/phone-number-check", icon: Phone, title: "Phone Number Check", desc: "Identify risk profiles"}
 ]
